@@ -1,248 +1,12 @@
-# Untitled
-
-<table>
-  <thead>
-    <tr>
-      <th style="text-align:left">
-        <p>Export Traceability</p>
-        <p>User Manual</p>
-      </th>
-      <th style="text-align:left"></th>
-      <th style="text-align:left"></th>
-      <th style="text-align:left"></th>
-      <th style="text-align:left"></th>
-      <th style="text-align:left"></th>
-      <th style="text-align:left"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="text-align:left">Responsible:</td>
-      <td style="text-align:left">Responsible Unit:</td>
-      <td style="text-align:left">Document Type:</td>
-      <td style="text-align:left">Distribution Status:</td>
-      <td style="text-align:left">Document State:</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">RCS</td>
-      <td style="text-align:left">EAPD</td>
-      <td style="text-align:left">Module Traceability Matrix</td>
-      <td style="text-align:left">Internal</td>
-      <td style="text-align:left">Draft</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">Prepared:</td>
-      <td style="text-align:left">Reinhold Lauer</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left">2017-09-26</td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left">Requirements Engineer</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">Verified:</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">Approved:</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left">Name/Title</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left">Signature</td>
-      <td style="text-align:left">Date</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">
-        <p>This document and its contents are the property of Bombardier Inc. or
-          its subsidiaries. This document contains confidential proprietary information.
-          The reproduction, distribution, utilization or the communication of this
-          document or any part thereof, without express authorization, is strictly
-          prohibited. Offenders will be held liable for the payment of damages.</p>
-        <p>&#xA9; 2017, Bombardier Inc. or its subsidiaries. All rights reserved.</p>
-      </td>
-      <td style="text-align:left">Identity Number :</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left">Effective Date:</td>
-      <td style="text-align:left">Revision:</td>
-      <td style="text-align:left">Language:</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-    <tr>
-      <td style="text-align:left"></td>
-      <td style="text-align:left">0.2</td>
-      <td style="text-align:left">en</td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-      <td style="text-align:left"></td>
-    </tr>
-  </tbody>
-</table>
-
-Revision Log
-
-| Revision | Date | Description of Changes |
-| :--- | :--- | :--- |
-| 0.1 | 2011-06-21 | Created. |
-| 0.2 | 2017-09-26 | Update with recent changes. |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-
-Table of Contents
-
-[1 General 5]()
-
-[1.1 Definitions 5]()
-
-[1.2 Requirements System Traceability 6]()
-
-[1.2.1 Export Traceability User Manual 6]()
-
-[1.2.2 System Traceability Overview 6]()
-
-[1.2.3 Module Traceability Matrixes 6]()
-
-[2 Traceability Export Explanation 7]()
-
-[2.1 Involved Modules 7]()
-
-[2.2 Exported Attributes 8]()
-
-[2.3 Actual Traceability Matrix 8]()
-
-[2.3.1 Levels 9]()
-
-[2.3.2 Table Borders 9]()
-
-[2.3.3 Background Color 9]()
-
-[2.3.4 Excluded Objects 9]()
-
-[2.3.5 Object Identifier 10]()
-
-[2.3.6 Object Headings 10]()
-
-[2.3.7 Object Text 10]()
-
-[2.3.8 Other Attributes 10]()
-
-[2.3.9 Colored Attribute Values 10]()
-
-[2.3.10 Not Applicable Objects 10]()
-
-[2.3.11 Hidden Attributes 10]()
-
-[2.3.12 Duplicated Objects 11]()
-
-[2.3.13 Suspect Links 11]()
-
-[2.3.14 Combined Last Objects 11]()
-
-[2.3.15 Real Headings 11]()
-
-[2.4 Summary 12]()
-
-[3 Traceability Export Generation 13]()
-
-[3.1 Starting Para Export Traceability 13]()
-
-[3.2 Base System/Module Selection 14]()
-
-[3.3 Involved Modules 14]()
-
-[3.4 Attributes to Export 15]()
-
-[3.5 Object/Attribute Distinction 16]()
-
-[3.6 Output 17]()
-
-[3.7 Export Traceability Matrix 17]()
-
-[4 Traceability Set Generation 18]()
-
-[4.1 Traceability System Overview 18]()
-
-[4.2 Module Traceability Matrix 18]()
+# Export Traceability User Manual
 
 ## General
 
 The purpose of this document is to describe the production of a traceability matrix generated for a requirements system, using the Doors script Para Export Traceability. Para Export Traceability produces a rich text file, which can be opened with MS Word or a similar application. This document targets requirements engineers, who are writing requirements specifications and have to export module traceability matrixes, Doors administrators, who have to produce a system-wide traceability matrix, and readers of the traceability matrix.
 
-Para Export Traceability can be launched from the menu Common \(d\) -&gt; Document/Report Generation -&gt; Generate Traceability Matrix Document.![](.gitbook/assets/0.png)
+Para Export Traceability can be launched from the menu Common \(d\) -&gt; Document/Report Generation -&gt; Generate Traceability Matrix Document.
+
+![](.gitbook/assets/0.png)
 
 ### Definitions
 
@@ -281,17 +45,17 @@ A separate module traceability matrix is generated for each requirements module.
 
 This section explains how the traceability export should be read and the different options that can be used when exporting the module traceability matrixes. How to produce the traceability export can be found in the section Traceability Export Generation.
 
-The result can look similar the following example, which should be read from right to left and top to bottom so that the bottom table borders of the previous page match the top table borders of the next page. The output consists of several sections which are Involved Modules, Exported Attributes, the Actual Traceability Matrix, and a Summary.![](.gitbook/assets/1.png)
+The result can look similar the following example, which should be read from right to left and top to bottom so that the bottom table borders of the previous page match the top table borders of the next page. The output consists of several sections which are Involved Modules, Exported Attributes, the Actual Traceability Matrix, and a Summary.
 
-Figure : Traceability Export Example
+![Traceability Export Example](.gitbook/assets/1.png)
 
 Note: In the following examples all object texts and object headings have been replaced by a placeholder, i.e. all letters have been replaced with Xs and all numbers with 9s.
 
 ### Involved Modules
 
-This section gives a summary of the modules involved in the generated module traceability matrix.![](.gitbook/assets/2.png)
+This section gives a summary of the modules involved in the generated module traceability matrix.
 
-Figure : Involved Modules
+![Involved Modules](.gitbook/assets/2.png)
 
 The information in the columns Created By, Date and Annotation is only used if baselines are involved in the module traceability matrix. Created By is the Doors username of the baseline creator. The date is the baseline creation date. Annotation is the comment the baseline creator has filled in when creating the baseline. For current versions, the last three columns are empty.
 
@@ -299,9 +63,9 @@ Which modules are involved is defined by which modules are linked to the base mo
 
 ### Exported Attributes
 
-This section shows which attributes are included in the involved modules including a short summary. If an attribute is shown in the traceability matrix it is written in black. If an attribute is not shown, it is written in gray.![](.gitbook/assets/3.png)
+This section shows which attributes are included in the involved modules including a short summary. If an attribute is shown in the traceability matrix it is written in black. If an attribute is not shown, it is written in gray.
 
-Figure : Exported Attributes
+![Exported Attributes](.gitbook/assets/3.png)
 
 Note: If the levels of the involved modules are reduced, also the attributes of the now excluded modules are still listed if the involved modules are not reloaded.
 
@@ -315,13 +79,13 @@ User-defined attributes include any attributes defined by the users. They are li
 
 ### Actual Traceability Matrix
 
-The actual traceability matrix is the part, which shows the actual linking of the objects followed by a short introduction. The summary contains the settings according to which the actual traceability matrix has been produced.![](.gitbook/assets/4.png)
+The actual traceability matrix is the part, which shows the actual linking of the objects followed by a short introduction. The summary contains the settings according to which the actual traceability matrix has been produced.
 
-Figure : Traceability Matrix Short Explanation
+![Traceability Matrix Short Explanation](.gitbook/assets/4.png)
 
-The Traced Requirement figure shows how a traced requirement can look like. The actual output depends on the requirements structure and the settings used to generate the module traceability matrix.![](.gitbook/assets/5.png)
+The Traced Requirement figure shows how a traced requirement can look like. The actual output depends on the requirements structure and the settings used to generate the module traceability matrix.
 
-Figure : Traced Requirement
+![Traced Requirement](.gitbook/assets/5.png)
 
 #### Levels
 
@@ -341,7 +105,9 @@ Table cells or deleted objects in the base module are not included in the tracea
 
 #### Object Identifier
 
-The object identifiers consist out of the module prefix followed by the Absolute Number. Two other attributes can be combined with the object identifier. The first attribute is separated with a ‘-‘ and the second attribute is separated with ‘ \(‘ and terminated with ‘\)’.![](.gitbook/assets/6.png)
+The object identifiers consist out of the module prefix followed by the Absolute Number. Two other attributes can be combined with the object identifier. The first attribute is separated with a ‘-‘ and the second attribute is separated with ‘ \(‘ and terminated with ‘\)’.
+
+![Additional Identifier Attributes](.gitbook/assets/6.png)
 
 For example “ATC\_SSRS-2391-S \(R\)” consists out of the Module Prefix “ATC\_SSRS-“, the Absolute Number “2391”, the safety requirement indication “-S”, and the object type “\(R\)”. That means that this object is a safety requirement with the number 2391 in the ATC subsystem requirements specification.
 
@@ -379,15 +145,15 @@ Attributes can be hidden below a certain level. The purpose of this function is 
 
 #### Duplicated Objects
 
-Duplicated objects, which are shown already above in the module traceability matrix, can be written violet. That should save some time when reviewing the module traceability matrix, since objects linked after the duplicated object, do not have to be checked twice.![](.gitbook/assets/7.png)
+Duplicated objects, which are shown already above in the module traceability matrix, can be written violet. That should save some time when reviewing the module traceability matrix, since objects linked after the duplicated object, do not have to be checked twice.
 
-Figure : Duplicated Objects
+![Duplicated Objects](.gitbook/assets/7.png)
 
 #### Suspect Links
 
-The two objects, shown in the figure Suspect Links with a red comment, indicate a suspect link between them. The comment “Has suspect out/in links” means that a link out of or into this object is suspect and that the linked objects should be check if they are still valid. The comment “Makes \[Object Identifier\] suspect” means that a change in this object has been made later than in the linked object.![](.gitbook/assets/8.png)
+The two objects, shown in the figure Suspect Links with a red comment, indicate a suspect link between them. The comment “Has suspect out/in links” means that a link out of or into this object is suspect and that the linked objects should be check if they are still valid. The comment “Makes \[Object Identifier\] suspect” means that a change in this object has been made later than in the linked object.
 
-Figure : Suspect Links
+![Suspect Links](.gitbook/assets/8.png)
 
 Note: Suspect links are only shown in the direction towards the base object.
 
@@ -397,13 +163,15 @@ To reduce the file size and increase the overview, objects in the most left fill
 
 #### Real Headings
 
-Real Headings can be shown without attributes so that they look like headings in a document and are included in the Navigation Pane. If the Real Headings option is selected the traceablity table is split into smaller tables.![](.gitbook/assets/9.png)
+Real Headings can be shown without attributes so that they look like headings in a document and are included in the Navigation Pane. If the Real Headings option is selected the traceability table is split into smaller tables.
+
+![Real Headings](.gitbook/assets/9.png)
 
 ### Summary
 
-At the end of the traceability matrix, a short summary is shown.![](.gitbook/assets/10.png)
+At the end of the traceability matrix, a short summary is shown.
 
-Figure : Summary
+![Summary](.gitbook/assets/10.png)
 
 ## Traceability Export Generation
 
@@ -433,17 +201,17 @@ The main functions of Para Word export are…
 
 When Para Export Traceability is launched previous settings are restored from the registry. Then all the involved modules are loaded into memory, what can take some time. During the involved modules are loaded, the Attributes to Export list is populated. After all modules are loaded, the attributes are selected according to the attributes selection regular expression.
 
-The Para Export Traceability user interface looks as shown below.![](.gitbook/assets/11.png)
+The Para Export Traceability user interface looks as shown below.
 
-Figure : Para Export Traceability User Interface
+![Para Export Traceability User Interface](.gitbook/assets/11.png)
 
 ### Base System/Module Selection
 
 By selecting the base system all modules, which fulfill the naming conventions, can be exported to the selected output path in one go. Click on Browse… to select a new base project. If a specific baseline should be loaded it the baseline suffix has to be written in the according field.
 
-By selecting the base module only the selected module can be exported. Click Browse… to change the selected module. Click on Reload Involved Module to update the involved modules and Attributes to Export according to the selected base module.![](.gitbook/assets/12.png)
+By selecting the base module only the selected module can be exported. Click Browse… to change the selected module. Click on Reload Involved Module to update the involved modules and Attributes to Export according to the selected base module.
 
-Figure : Base System/Module
+![Base System/Module](.gitbook/assets/12.png)
 
 ### Involved Modules
 
@@ -451,9 +219,9 @@ The involved modules are loaded when Para Export Traceability is launched, when 
 
 Note: To detect a change in the Include/Exclude Next Level… regular expression, the Enter button has to be pressed after the input.
 
-Note: The number shown over the Involved Modules list indicates how many modules are involved after the list has been refreshed.![](.gitbook/assets/13.png)
+Note: The number shown over the Involved Modules list indicates how many modules are involved after the list has been refreshed.
 
-Figure : Involved Modules
+![Involved Modules](.gitbook/assets/13.png)
 
 The levels of involved modules can be selected individually for the out and in direction. Out To defines how many levels of objects, that are linked out, are traced. In To defines how many levels of objects, which are linked in, are traced. If Level 0 is select nothing is traced in that direction.
 
@@ -467,25 +235,25 @@ Note: So far all modules are involved all the time and it is not possible to man
 
 ### Attributes to Export
 
-The Attributes to Export list shows all attributes contained in all loaded modules since the last time the modules have been reloaded.![](.gitbook/assets/14.png)
+The Attributes to Export list shows all attributes contained in all loaded modules since the last time the modules have been reloaded.
 
-Figure : Attributes to Export
+![Attributes to Export](.gitbook/assets/14.png)
 
 To add attributes to the identifier, write the names in the Add Attributes to Identifier fields. If the first attribute value exists it is added to the identifier separated with a ‘-‘ in between. If the second attribute value exists it is added at the end of the identifier in brackets. If attributes are added to the identifier, they should be deselected in the Attributes to Export list, so that they are not exported twice.
 
 Attributes, which should be included in the traceability export, can be selected or deselected individually, by clicking on them. To select or deselect all attributes in the list, just click on Select All or Deselect All. If the attributes in the current view of the base module should be selected, click on As View. As Selection selects the attributes listed in the Attribute Selection regular expression.
 
-Note: The Attribute Selection will be set for each base module when a base system is exported.![](.gitbook/assets/15.png)
+Note: The Attribute Selection will be set for each base module when a base system is exported.
 
-Figure : Attribute Selection Regular Expression
+![Attribute Selection Regular Expression](.gitbook/assets/15.png)
 
 Clicking on Get Regex sets the Attribute Selection regular expression according to the selected attributes in the Attributes to Export list.
 
 ### Object/Attribute Distinction
 
-Objects and attributes can be made different from the rest according to certain criteria.![](.gitbook/assets/16.png)
+Objects and attributes can be made different from the rest according to certain criteria.
 
-Figure : Attribute Distinction
+![Attribute Distinction](.gitbook/assets/16.png)
 
 Check Mark Duplicated Objects to highlight objects that are written more than once violet.
 
@@ -509,9 +277,7 @@ All the text fields are regular expressions. One statement can be used for more 
 
 ### Output
 
-![](.gitbook/assets/17.png)
-
-Figure : Output Settings
+![Output Settings](.gitbook/assets/17.png)
 
 Select the Paper Size and Paper Orientation.
 
@@ -525,9 +291,7 @@ Set the Output Path / File Name to the path and file name to where the traceabil
 
 ### Export Traceability Matrix
 
-![](.gitbook/assets/18.png)
-
-Figure : Export Buttons
+![Export Buttons](.gitbook/assets/18.png)
 
 Click on Export Base Module to export only the base module.
 
