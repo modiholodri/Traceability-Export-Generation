@@ -1,0 +1,1556 @@
+// Para Export Traceability
+
+/*
+Exports the traceability from any module or a complete requirements system.
+*/
+
+//**********************************  History  ******************************
+// Reinhold Lauer    2010-11-03  First version.
+// Reinhold Lauer    2011-01-21  Improved version.
+// Reinhold Lauer    2013-08-14  Included modules to show filter according to recommendation of Tobias Kroner.
+// Reinhold Lauer    2013-11-27  Made headings different, added enforcing of modules to show, fixed actual max level bug.
+// Reinhold Lauer    2016-05-19  Fix another max level bug.
+// Reinhold Lauer    2017-03-17  Added fake real headings.
+// Reinhold Lauer    2017-09-21  Removed Sky Blue background if there are no inlinked objects.
+// Reinhold Lauer    2017-09-25  Added List All Attributes option.
+// Reinhold Lauer    2017-09-29  Added Help button. Minor improvements.
+// Tomas Lundh       2018-02-19  Removed spaces in doGetMatchingAttr "( ^" sAttrName "$ )" -> "(^" sAttrName "$)".
+//                               Only check for module name in loadInObjects (excluding paths).
+// 1.1 Tomas Lundh   2018-04-23  Give warning instead of dxl error when module list is empty.
+//                               Introduced version number.
+//                               Added radio button to handle objects as headings and or trace objects.
+// 1.2 Tomas Lundh   2018-08-20  Added registry save and restore for heading settings.
+//                               Issue info about OLEs in document.
+//---------------------------------------------------------------------------
+
+pragma runLim, 0
+string progRelease = "1.2"
+
+const int iA3Long = 23811		// paper and font sizes
+const int iA3Short = 16838
+const int iA4Long = 16838
+const int iA4Short = 11907
+const int iMargin = 919
+const int A4 = 0
+const int A3 = 1
+const string saPaperSizes[] = {"A4", "A3"} 
+const int Portrait = 0
+const int Landscape = 1
+const string saPaperOrientations[] = {"Portrait", "Landscape"} 
+int iPaperWidth = iA4Short
+int iPaperActualWidth = iPaperWidth - 2*iMargin
+int iPaperHight = iA4Short
+int iFSHeading = 24*100/100
+int iFSText = 24*88/100
+int iFSTableHeading = 24*76/100 
+int iFSTableText = 24*64/100
+								// rtf constants
+const string sColorTable = "{\\colortbl ;\\red255\\green0\\blue0;\\red0\\green125\\blue0;\\red125\\green125\\blue125;\\red85\\green26\\blue139;\\red201\\green246\\blue255;\\red255\\green255\\blue255;}" 	
+const string sBlack = "\\cf0 "
+const string sRed = "\\cf1 "
+const string sGreen = "\\cf2 "
+const string sGray = "\\cf3 "
+const string sPurple = "\\cf4 "
+const string sSkyBlue = "\\cf5 "
+const string sSkyBlueCell = "\\clcbpat5 "
+const string sGrayBack = "" // "\\chcbpat4 " // Looks bad in MS Word
+const string sSkyBlueBack = "\\chcbpat5 "
+const string sWhiteBack = "\\chcbpat0 "
+const string saColors[] = {"Black", "Gray", "Green", "Red", "Purple", "Sky Blue"}
+const string saColorFonts[] = {sBlack, sGray, sGreen, sRed, sPurple, sSkyBlue}
+const string sTopBorder = "\\clbrdrt\\brdrs\\brdrw15 "
+const string sLeftBorder = "\\clbrdrl\\brdrs\\brdrw15 "
+const string sRightBorder = "\\clbrdrr\\brdrs\\brdrw15 "
+const string sBottomBorder = "\\clbrdrb\\brdrs\\brdrw15 "
+const string sAllBorders = sTopBorder sLeftBorder sRightBorder sBottomBorder
+
+const string saLevels[] = {"Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8", "Level 9"}
+string saLevelText[] = {"", "", "", "", "", "", "", "", "", ""}
+string saLevelBorder[] = ( sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder, sTopBorder )
+string sCellBackground = sSkyBlueCell
+int iLastLevel = 0
+int iActualMaxLevel = 0
+int iColumnWidth = 0
+string sIndent
+
+const string sLeftSpacer = "        >>>>>                           "
+const string sRightSpacer = "                           <<<<<   "
+int iHalfWidth = 385
+string saEmpty[] = {}
+int iTemp = 0
+string sTemp = ""
+bool bTemp = false
+
+const string sRegistryPath = "HKEY_CURRENT_USER\\SOFTWARE\\Para\\Export Traceability\\"
+Locale loc = userLocale
+Module mBaseModule = current
+Folder fBaseSystem = current
+Stream strmOutput = null
+Skip skUniqueObjects = null
+bool bHasInLinks = false
+bool bReloadModules = false
+Buffer buffLoadedModules = create
+bool bCancelled = false
+
+int iBaseObjectsCount = 0		// counts 
+int iInvolvedModulesCount = 0
+int iExportedObjectsCount = 0
+int iUniqueObjectsCount = 0
+int iSuspectLinksCount = 0
+int iNotApplicableObjectCount = 0
+int iDifferentAttrCount = 0
+int iSelectedAttrCount = 0
+int iExportedAttrCount = 0
+int iHiddenAttrCount = 0
+
+// Form elements and according regular expressions
+DB dbExportTrace = null
+									// base system
+DBE fldBaseSystemName = null
+DBE btnBrowseBaseSystem = null
+DBE fldModulesToExportRegex = null
+									// base module
+DBE fldBaseModuleName = null
+DBE btnBrowseBaseModule = null
+DBE fldWantedBaselineSuffix = null
+									// involved modules
+DBE lblInvolvedModules = null									
+DBE mlstInvolvedModules = null
+DBE btnReloadInvolvedModules = null
+DBE chcMaxOutLevel = null
+DBE chcMaxInLevel = null
+DBE fldIncludeNextLevelObjectRegex = null
+Regexp includeNextLevelObject = null
+DBE fldExcludeNextLevelObjectRegex = null
+Regexp excludeNextLevelObject = null
+DBE cbSelectModulesToShowEnforced = null
+DBE btnSelectModulesToShow = null
+DBE fldSelectModulesToShowRegex = null
+Regexp isModuleToShow = null
+									// attributes to export
+DBE lblAttrToExport = null
+DBE mlstAttrToExport = null
+DBE btnSelectAllAttr = null
+DBE btnSelectMatchingAttr = null
+DBE btnSelectAsView = null
+DBE btnDeselectAllAttr = null
+DBE btnGetMatchingAttr = null
+DBE txtSelectAttrRegex = null
+DBE fldIdentifierMinusAttr = null
+DBE fldIdentifierBracesAttr = null
+									// object/attribute distinction
+DBE cbMarkDuplicated = null			
+DBE cbShowSuspect = null
+DBE cbUsePlaceholder = null
+DBE cbIncludeEmptyAttr = null
+DBE cbNoFilter = null
+//DBE cbRealHeadings = null
+//DBE cbRealHeadingsRepeatInTable = null
+DBE cbHeadingRadio = null
+DBE cbListAllAttributes = null
+
+DBE fldApplicableAttrRegex = null		
+DBE fldHasApplicableValueRegex = null
+Regexp isApplicableAttr = null
+bool bCheckApplicableAttr = true
+Regexp hasApplicableValue = null
+DBE cbHideNotApplicable = null
+
+
+DBE fldColorAttrRegex = null
+DBE fldHasColorValueRegex = null
+DBE chcTrueColor = null
+DBE chcFalseColor = null 
+Regexp isColorAttribute = null
+Regexp hasColorValue = null
+
+DBE fldExcludedAttrLevelRegex = null
+DBE chcExcludeAttrLevel = null
+Regexp isExcludeAttrLevel = null
+										// output
+DBE rbPaperSize = null
+DBE rbPaperOrientation = null
+DBE cbSeparateLastObjects = null
+DBE fldFontSizeReference = null
+DBE fldIndent = null
+
+DBE fnOutputFileBrowse = null
+
+
+// **************************************************************************************************************
+// General functions
+
+// Convert string into a regular expression, and catch any errors.
+Regexp regexpOf ( string sRegexPattern )
+{ 
+    noError
+    Regexp isPattern = regexp sRegexPattern
+    string sErrorMessage = lastError
+    if ( sErrorMessage != "" ) {
+        if ( matches("<[^>]*> *", sErrorMessage ) ) sErrorMessage = sErrorMessage[end( 0 )+1:]
+        ack sErrorMessage
+        return null
+    }
+    return isPattern
+}
+
+// Convert the original string to a placeholder string.
+string getPlaceholder ( string sOriginal )
+{
+	if ( !get cbUsePlaceholder ) return sOriginal
+	
+	string sPlaceholder = ""
+	int iPosition
+	for ( iPosition = 0; iPosition < length sOriginal; iPosition++ ) {
+		if ( islower sOriginal[iPosition] ) sPlaceholder = sPlaceholder "x"
+		else if ( isupper sOriginal[iPosition] ) sPlaceholder = sPlaceholder "X"
+		else if ( isdigit sOriginal[iPosition] ) sPlaceholder = sPlaceholder "9"
+		else sPlaceholder = sPlaceholder sOriginal[iPosition] ""
+	} 
+	return sPlaceholder
+}
+
+// Calculate various setting concerning the paper orientation, size, and fonts.
+void calculatePaperFont ( )
+{
+	if ( get rbPaperOrientation == Portrait )	{	// paper and font sizes
+		if ( get rbPaperSize == A4 ) {
+			iPaperHight = iA4Long
+			iPaperWidth = iA4Short
+		}
+		else { // A3 
+			iPaperHight = iA3Long
+			iPaperWidth = iA3Short
+		}
+	}
+	else { // Landscape
+		if ( get rbPaperSize == A4 ) {
+			iPaperHight = iA4Short
+			iPaperWidth = iA4Long
+		}
+		else { // A3 
+			iPaperHight = iA3Short
+			iPaperWidth = iA3Long
+		}
+	}
+	iPaperActualWidth = iPaperWidth - 2*iMargin
+	iColumnWidth = iPaperActualWidth / ( iActualMaxLevel + 1 )
+	int iFontSizeReference = intOf get fldFontSizeReference
+	iFSHeading = iFontSizeReference*100/100
+	iFSText = iFontSizeReference*76/100
+	iFSTableHeading = iFontSizeReference*76/100 
+	iFSTableText = iFontSizeReference*64/100
+}
+
+// **************************************************************************************************************
+// Attribute handling
+
+// Show information about the modules and selected attributes.
+void showAttributeInformation ( )
+{
+	strmOutput << sBlack "\\pard\\par \\fs" iFSHeading " \\ul Exported Attributes\\ul0\\par\\par\n"
+	strmOutput << "\\li300 "
+	string sIdentifierMinusAttr = get fldIdentifierMinusAttr
+	strmOutput << "\\fs" iFSText " The attribute " sIdentifierMinusAttr " is added to the identifier preceded with a '-'.\\par\n"
+	string sIdentifierBracesAttr = get fldIdentifierBracesAttr 
+	strmOutput << "The attributes " sIdentifierBracesAttr " is added to the identifier within round brackets ( ).\\par\n"
+	
+	string sApplicableAttrRegex = get fldApplicableAttrRegex
+	string sHasApplicableValueRegex = get fldHasApplicableValueRegex
+	strmOutput << "If the attribute <" sApplicableAttrRegex "> is not <" sHasApplicableValueRegex "> then the object "
+	if ( get cbHideNotApplicable ) strmOutput << "is hidden.\\par\n" 
+	else strmOutput << "is marked with " sRed "Not Applicable!" sBlack "\\par\n"
+	string sColorAttrRegex = get fldColorAttrRegex
+	string sHasColorValueRegex = get fldHasColorValueRegex
+	strmOutput << "If the attribute <" sColorAttrRegex "> is <" sHasColorValueRegex "> then it is written " saColorFonts[get chcTrueColor] saColors[get chcTrueColor] sBlack " else " saColorFonts[get chcFalseColor] saColors[get chcFalseColor] sBlack ".\\par\n"
+	string sExcludedAttrLevelRegex = get fldExcludedAttrLevelRegex
+	strmOutput << "If the attribute <" sExcludedAttrLevelRegex "> is below " saLevels[get chcExcludeAttrLevel] " then it is not shown.\\par\n"
+	
+	strmOutput << iDifferentAttrCount " different attributes are contained in all involved modules.\\par\n"
+	strmOutput << iSelectedAttrCount " attributes are included which are shown black.\\par \n"
+	if ( get cbListAllAttributes ) strmOutput << "Other existing attributes are shown " sGray "gray" sBlack ".\\par\n"
+	strmOutput << "\\par\\li0 "
+	
+	strmOutput << "\\trowd \\trgaph108\\trleft300\\trhdr"
+	strmOutput << sAllBorders "\\cellx5000 "
+	strmOutput << "\\intbl \\fs" iFSTableHeading "\\b Attribute Name \\b0\\cell\\row\\fs" iFSTableText "\n"
+	string sAttrName = ""
+	int iAttributesCount
+	for ( iAttributesCount = 0; iAttributesCount < noElems mlstAttrToExport; iAttributesCount++ )
+	{
+		sAttrName = get ( mlstAttrToExport, iAttributesCount )
+		if ( selected ( mlstAttrToExport, iAttributesCount ) ) { 
+			strmOutput << "\\intbl " sBlack sAttrName "\\cell\\row\n"
+		}
+		elseif ( get cbListAllAttributes ) {
+			strmOutput << "\\intbl " sGray sAttrName "\\cell\\row\n"
+		}
+	}
+}
+
+// Update the attributes to export label and buttons.
+void doUpdateAttrToExport ( DBE dbeCalling )
+{
+    iDifferentAttrCount = noElems mlstAttrToExport
+    iSelectedAttrCount = 0
+    string sAttrName = ""
+    for sAttrName in mlstAttrToExport do iSelectedAttrCount++
+    
+    if ( iSelectedAttrCount == 0 ) inactive btnDeselectAllAttr
+    else active btnDeselectAllAttr
+    
+    if ( iSelectedAttrCount == iDifferentAttrCount ) inactive btnSelectAllAttr
+    else active btnSelectAllAttr
+    
+    set ( lblAttrToExport, sLeftSpacer iSelectedAttrCount "/" iDifferentAttrCount " Attributes to Export" sRightSpacer )
+}
+
+// Select all attributes of the list.
+void doSelectAllAttr ( DBE dbeCalling )
+{ 
+    int iAttrIndex = 0
+    for iAttrIndex in 0 : ( noElems mlstAttrToExport )-1 do set ( mlstAttrToExport, iAttrIndex, true )
+    doUpdateAttrToExport mlstAttrToExport
+}
+
+// Deselect all attributes of the list.
+void doDeselectAllAttr ( DBE dbeCalling )
+{ 
+    int iAttrIndex
+    for iAttrIndex in 0 : ( noElems mlstAttrToExport )-1 do set( mlstAttrToExport, iAttrIndex, false )
+    doUpdateAttrToExport mlstAttrToExport
+}
+
+// Deselect all attributes of the list
+void doSelectAsView ( DBE dbeCalling )
+{ 
+	Skip skAttrInView = create
+	Column cColumn = null
+	int iAttrInView = 0
+	
+	doDeselectAllAttr ( DBE dbeCalling )
+	for cColumn in mBaseModule do 
+	{
+		if ( main cColumn ) 
+		{
+			put ( skAttrInView, iAttrInView++, "Object Heading" )
+			put ( skAttrInView, iAttrInView++, "Object Text" )
+		}	
+		if ( !null attrName cColumn ) put ( skAttrInView, iAttrInView++, attrName cColumn )
+	}
+    int iAttrIndex = 0
+    for iAttrIndex in 0 : ( noElems mlstAttrToExport )-1 do 
+    {
+    	string sAttrName = get ( mlstAttrToExport, iAttrIndex )
+    	string sAttrInView = ""
+    	for sAttrInView in skAttrInView do 
+    	{
+    		if ( sAttrInView == sAttrName ) set ( mlstAttrToExport, iAttrIndex, true )
+    	}
+    }
+    delete skAttrInView
+    doUpdateAttrToExport mlstAttrToExport
+}
+
+// Add attribute to a sorted list if the attribute is not listed.
+void addAttrToList ( DBE dbeAttrList, string sNewAttrName )
+{
+	int iAttrPosition	// 5 to skip standard attributes
+	for ( iAttrPosition = 5; iAttrPosition < noElems dbeAttrList; iAttrPosition++ )
+	{
+		string sAttrName = get ( dbeAttrList, iAttrPosition )
+		if ( sAttrName == sNewAttrName ) return // exists already
+		if ( sAttrName > sNewAttrName ) break	// insert here
+	}
+	insert ( dbeAttrList, iAttrPosition, sNewAttrName )
+	set ( dbeAttrList, iAttrPosition, false )
+    doUpdateAttrToExport mlstAttrToExport
+}
+
+// Fill the attributes list with module attributes.
+void addModuleAttrToList ( Module mThis )
+{
+	AttrDef adAttrDefinition = null
+	for adAttrDefinition in mThis do
+	{
+		if ( adAttrDefinition.module || adAttrDefinition.system ) continue
+		addAttrToList ( mlstAttrToExport, adAttrDefinition.name "" )
+	}
+}
+
+// Select the attributes, which match the regular expression.
+void doSelectMatchingAttr ( DBE dbeCalling )
+{
+    string sSelectAttr = get txtSelectAttrRegex   
+    Regexp isSelectedAttr = regexpOf sSelectAttr
+    if ( null isSelectedAttr ) return
+    
+    int iAttrIndex = 0
+    for iAttrIndex in 0 : ( noElems mlstAttrToExport )-1 do
+    {
+        string sAttrName = get ( mlstAttrToExport, iAttrIndex )
+        set ( mlstAttrToExport, iAttrIndex, isSelectedAttr sAttrName )
+    }
+    doUpdateAttrToExport mlstAttrToExport
+}
+
+// Select the attributes according to the regex. 
+void doGetMatchingAttr ( DBE dbeCalling )
+{
+	string sSelectedAttrRegex = ""
+	string sAttrName = ""
+	for sAttrName in mlstAttrToExport do
+	{
+		if ( sSelectedAttrRegex != "" ) sSelectedAttrRegex = sSelectedAttrRegex "|"
+		sSelectedAttrRegex = sSelectedAttrRegex "(^" sAttrName "$)"
+	}
+	set ( txtSelectAttrRegex, sSelectedAttrRegex )
+}
+
+// **************************************************************************************************************
+// Module handling
+
+// Callback to reload the module when needed.
+void doReloadModules( DBE dbeThis )
+{
+	bReloadModules = true
+}
+
+// Get the complete name for this module.
+string getModuleName ( Module mThis )
+{
+	string sModuleName = name mThis
+	if ( isBaseline mThis )  return sModuleName "  [ " versionString ( moduleVersion mThis ) " ]" 
+	else  return sModuleName "  [ " version mThis " Current ]"
+}
+
+// Make sure that all involved modules are selected all the time
+void doSelectModulesToShow ( DBE dbeCalling )
+{
+	string sModulesToShowRegex = get fldSelectModulesToShowRegex
+	isModuleToShow = regexpOf sModulesToShowRegex
+
+	string sModuleName = ""
+    int iCount = 0
+    if (noElems mlstInvolvedModules < 1) {
+    	warningBox("No involved modules in the list, no selection is possible!")
+    } else {
+	    for iCount in 0 : ( noElems mlstInvolvedModules )-1 do {
+	    	sModuleName = get ( mlstInvolvedModules, iCount )
+	    	set ( mlstInvolvedModules, iCount, isModuleToShow sModuleName )
+	    }
+    }
+}
+
+
+// Add elements to a sorted list if the element is not listed.
+bool addModuleToList ( DBE dbeModuleList, Module mThis, string sLevel )
+{
+	int iModulePosition	
+	string sNewModuleName = getModuleName mThis
+
+	for ( iModulePosition = 0; iModulePosition < noElems dbeModuleList; iModulePosition++ )
+	{
+		string sModuleName = get ( dbeModuleList, iModulePosition )
+		if ( sModuleName == sNewModuleName ) return false // exists already
+		if ( sModuleName > sNewModuleName ) break	// insert here
+	}
+	insert ( dbeModuleList, iModulePosition, sNewModuleName )
+	set ( dbeModuleList, iModulePosition, true )
+	set ( lblInvolvedModules, sLeftSpacer ++iInvolvedModulesCount " Involved Modules" sRightSpacer ) 
+
+	if ( isBaseline mThis ) {
+		Baseline bBaseline = baselineInfo mThis
+		buffLoadedModules += "\\intbl " iInvolvedModulesCount "\\cell " sNewModuleName "\\cell " sLevel "\\cell " user bBaseline "\\cell " dateOf bBaseline "\\cell " annotation bBaseline "\\cell\\row\n"
+	}
+	else buffLoadedModules += "\\intbl " iInvolvedModulesCount "\\cell " sNewModuleName "\\cell " sLevel "\\cell\\cell\\cell\\cell\\row\n"
+
+	return true
+}
+
+void loadOutObjectModules ( Object oThis, int iLevel )
+{
+	if ( iLevel > 9 ) return // maximum number of columns reached, don't bother to check anymore... 
+    if ( iLevel > iActualMaxLevel ) iActualMaxLevel = iLevel
+	if ( iLevel > 0 && !put ( skUniqueObjects, oThis, 0 ) ) return	// object already checked
+	string sLevel = "Base"
+	if ( iLevel > 0 ) sLevel =  iLevel " Out"
+    if ( addModuleToList ( mlstInvolvedModules, module oThis, sLevel ) ) addModuleAttrToList module oThis
+	if ( iLevel >= get chcMaxOutLevel && !includeNextLevelObject identifier oThis ) return	// no need to load further modules
+    if ( excludeNextLevelObject identifier oThis ) return
+	
+    Link lOut = null
+    for lOut in all oThis->"*" do {
+        ModuleVersion mvOut = targetVersion lOut
+        if ( null module mvOut ) continue
+        if ( isDeleted module mvOut ) continue
+        Object oOut = target lOut
+		if ( null oOut ) {
+			string sOutModuleName = fullName mvOut
+        	progressMessage "Opening " sOutModuleName
+			Module mOut = read ( sOutModuleName, false )
+			if ( isBaseline mvOut ) load ( mOut, baseline mvOut, false )
+            if ( null mOut ) {
+            	bReloadModules = true
+            	ack "Could not load " sOutModuleName
+            	return
+            }
+		}
+
+		oOut = target lOut
+        if ( null oOut ) continue
+        if ( isDeleted oOut ) continue
+		loadOutObjectModules ( oOut, iLevel+1 ) 
+		if ( bReloadModules ) return
+    }
+}
+
+void loadInObjectModules ( Object oThis, int iLevel )
+{
+	if ( iLevel > 9 ) return // maximum number of columns reached, don't bother to check anymore... 
+    if ( iLevel > iActualMaxLevel ) iActualMaxLevel = iLevel
+	if ( !put ( skUniqueObjects, oThis, 0 ) ) return	// object already checked
+	string sLevel = "Base"
+	if ( iLevel > 0 ) sLevel =  iLevel " In"
+    if ( addModuleToList ( mlstInvolvedModules, module oThis, sLevel ) ) addModuleAttrToList module oThis
+	if ( iLevel >= get chcMaxInLevel && !includeNextLevelObject identifier oThis ) return	// no need to load further modules
+    if ( excludeNextLevelObject identifier oThis ) return
+	
+    // progressMessage "Checking object " identifier oThis
+    LinkRef lrIn = null
+    for lrIn in all ( oThis<-"*" ) do {
+   		string sInModuleName = fullName source lrIn
+   		// Check only name here not fullName
+   		string sInModuleNameOnly = name source lrIn
+   		if (  !isModuleToShow sInModuleNameOnly ) continue
+   		//if (  !isModuleToShow sInModuleName ) continue
+        if ( module sInModuleName ) {
+            if ( !isDeleted module sInModuleName && null data sourceVersion lrIn ) {
+		    	progressMessage "Opening " sInModuleName
+			    Module mIn = read ( sInModuleName, false )
+                if ( isBaseline sourceVersion lrIn ) load ( mIn, baseline sourceVersion lrIn, false )
+                if ( null mIn ) {
+                	bReloadModules = true
+                	ack "Could not load " sInModuleName
+                	return
+                }
+//                progressMessage "Checking if all involved modules are open...\n" name module oThis
+            }
+        }
+    }
+	
+	Link lIn = null
+    for lIn in all ( oThis<-"*" ) do {
+        ModuleVersion mvIn = sourceVersion lIn
+        if ( null module mvIn ) continue
+        if ( isDeleted module mvIn ) continue
+        if ( !isModuleToShow name module mvIn ) continue  
+
+        Object oIn = source lIn
+        if ( null oIn ) continue
+        if ( isDeleted oIn ) continue
+        loadInObjectModules ( oIn, iLevel+1 ) 
+		if ( bReloadModules ) return
+    }
+}
+
+// Load the versions and update the attributes to compare.
+void loadModules (  )
+{
+	Object oBase = null
+	int iExportedBaseObjectsCount = 0
+
+	if ( get cbSelectModulesToShowEnforced ) isModuleToShow = regexpOf get fldSelectModulesToShowRegex
+	else isModuleToShow = regexpOf "."
+	
+	skUniqueObjects = create
+	iInvolvedModulesCount = 0
+	iActualMaxLevel = 0
+	empty mlstInvolvedModules
+	
+	if ( get fldIncludeNextLevelObjectRegex == "" ) set ( fldIncludeNextLevelObjectRegex, "not applicable" )
+	includeNextLevelObject = regexpOf get fldIncludeNextLevelObjectRegex
+	if ( get fldExcludeNextLevelObjectRegex == "" ) set ( fldExcludeNextLevelObjectRegex, "not applicable" )
+	excludeNextLevelObject = regexpOf get fldExcludeNextLevelObjectRegex
+
+	progressStart (dbExportTrace, "Para Export Traceability " getModuleName mBaseModule, "", iBaseObjectsCount )
+	progressMessage "Checking if all involved modules are open..."
+
+	buffLoadedModules = sBlack "\\pard \\fs" iFSHeading "\\ul Involved Modules\\ul0 \\par\\fs" iFSText "\\par\n"
+	buffLoadedModules += "\\li300 "
+	buffLoadedModules += "Out modules are checked up to " saLevels[get chcMaxOutLevel] ".\\par\n"
+	buffLoadedModules += "In modules are checked down to " saLevels[get chcMaxInLevel] ".\\par\n"
+	string sIncludeNextLevelObjectRegex = get fldIncludeNextLevelObjectRegex
+	buffLoadedModules += "Objects outside the maximum levels linked to objects with <" sIncludeNextLevelObjectRegex "> in the identifier are included.\\par\n"
+	string sExcludeNextLevelObjectRegex = get fldExcludeNextLevelObjectRegex
+	buffLoadedModules += "Objects inside the maximum levels linked to objects with <" sExcludeNextLevelObjectRegex "> in the identifier are excluded.\\par\n"
+
+	buffLoadedModules += "\\par\\li0 "
+	buffLoadedModules += "\\trowd \\trgaph108\\trleft300\\trhdr"
+	buffLoadedModules += sAllBorders "\\cellx700 " sAllBorders "\\cellx3300 " sAllBorders "\\cellx4000 " sAllBorders "\\cellx5200 " sAllBorders "\\cellx6500 " sAllBorders "\\cellx" iPaperActualWidth " \n"
+	buffLoadedModules += "\\intbl \\fs" iFSTableHeading "\\b # \\cell Version \\cell Level \\cell Created By \\cell Date \\cell Annotation \\cell\\b0\\row\\fs" iFSTableText "\n"
+
+	bReloadModules = false
+    if ( get cbNoFilter ) {
+    	current = mBaseModule
+    	filtering off
+    } 
+	for oBase in /* entire */ mBaseModule do
+	{
+		if ( null oBase || isDeleted oBase || cell oBase || table oBase || row oBase ) continue
+		progressStep iExportedBaseObjectsCount++
+		if ( progressCancelled ) {
+			bReloadModules = true
+			bCancelled = true
+		}
+		if ( get chcMaxOutLevel > 0 ) loadOutObjectModules ( oBase, 0 )
+		if ( get chcMaxInLevel > 0 ) loadInObjectModules ( oBase, 0 )
+		if ( bReloadModules ) break
+	}
+
+	calculatePaperFont
+
+	progressStop
+	delete skUniqueObjects
+	if ( get cbSelectModulesToShowEnforced ) doSelectModulesToShow btnSelectModulesToShow
+}
+
+// Load the versions and update the attributes to compare
+void doReloadInvolvedModules ( DBE btnReloadInvolvedModules )
+{
+	loadModules
+}
+
+// **************************************************************************************************************
+// Registry handling
+void setRegistryString ( string sRegistryName, string sValue ) {
+	setRegistry ( sRegistryPath, sRegistryName, sValue )
+}
+
+void setRegistryInteger ( string sRegistryName, int iValue ) {
+	setRegistry ( sRegistryPath, sRegistryName, iValue )
+}
+
+void setRegistrySa ( string sRegistryName, string saThis[], int iValue ) {
+	setRegistry ( sRegistryPath, sRegistryName, saThis[iValue] )
+}
+
+void setRegistryBoolean ( string sRegistryName, bool bValue ) {
+	string sTemp = "false"
+	if ( bValue ) sTemp = "true"
+	setRegistry ( sRegistryPath, sRegistryName, sTemp )
+}
+
+void readRegistryString ( DBE dbeThis, string sRegistryName, string sDefault ) {
+	string sTemp = getRegistry ( sRegistryPath, sRegistryName )
+	if ( null sTemp ) sTemp = sDefault
+	set ( dbeThis, sTemp )
+}
+
+void readRegistryInteger ( DBE dbeThis, string sRegistryName, int iDefault ) {
+	int iTemp = iDefault
+	string sTemp = getRegistry ( sRegistryPath, sRegistryName )
+	if ( !null sTemp ) iTemp = intOf sTemp
+	set ( dbeThis, iTemp )
+}
+
+void readRegistrySa ( DBE dbeThis, string sRegistryName, string saThis[], string sDefault ) {
+	int iTemp = 0
+	string sTemp = getRegistry ( sRegistryPath, sRegistryName )
+	if ( null sTemp ) sTemp = sDefault
+	for ( iTemp = 0; iTemp < ( sizeof saThis )-1; iTemp++ ) {
+		if ( saThis[iTemp] == sTemp ) break
+	}
+	set ( dbeThis, iTemp )
+}
+
+void readRegistryBoolean ( DBE dbeThis, string sRegistryName, string sDefault ) {
+	string sTemp = getRegistry ( sRegistryPath, sRegistryName ) 
+	if ( null sTemp ) sTemp = sDefault 
+	set ( dbeThis, sTemp == "true" )
+}
+
+// Save settings to the registry
+void saveRegistry ( )
+{
+// involved modules
+	setRegistrySa ( "Maximum Out Level", saLevels, get chcMaxOutLevel )
+	setRegistrySa ( "Maximum In Level", saLevels, get chcMaxInLevel )
+	setRegistryString ( "Include Next Level Object Regex", get fldIncludeNextLevelObjectRegex )
+	setRegistryString ( "Exclude Next Level Object Regex", get fldExcludeNextLevelObjectRegex )
+	setRegistryBoolean ( "Enforce Modules to Show", get cbSelectModulesToShowEnforced )
+	setRegistryString ( "Modules to Show Regex", get fldSelectModulesToShowRegex )
+	setRegistryString ( "Modules To Export Regex", get fldModulesToExportRegex )
+	setRegistryString ( "Use Baseline Suffix", get fldWantedBaselineSuffix )
+
+// attributes to export
+	setRegistryString ( "Select Attributes Regex", get txtSelectAttrRegex )
+	setRegistryString ( "Identifier Minus Attribute", get fldIdentifierMinusAttr )
+	setRegistryString ( "Identifier Braces Attribute", get fldIdentifierBracesAttr )
+
+// object/attribute distinction
+	setRegistryBoolean ( "Mark Duplicated Objects", get cbMarkDuplicated )
+	setRegistryBoolean ( "Show Suspect Links", get cbShowSuspect )
+	setRegistryBoolean ( "User Placeholder", get cbUsePlaceholder )
+	setRegistryBoolean ( "Include Empty Attributes", get cbIncludeEmptyAttr )
+	setRegistryBoolean ( "No Filter", get cbNoFilter )
+	
+	//setRegistryBoolean ( "Real Headings", get cbRealHeadings )
+	//setRegistryBoolean ( "Real Headings (Repeat in Tables)", get cbRealHeadingsRepeatInTable )
+	setRegistryInteger ( "Treat Heading Objects as", get cbHeadingRadio)
+	setRegistryBoolean ( "List All Attributes", get cbListAllAttributes )
+
+	setRegistryString ( "Applicable Attribute Regex", get fldApplicableAttrRegex ) 
+	setRegistryString ( "Has Applicable Regex", get fldHasApplicableValueRegex )
+	setRegistryBoolean ( "Hide Not Applicable", get cbHideNotApplicable )
+
+	setRegistryString ( "Color Attribute Regex", get fldColorAttrRegex )
+	setRegistryString ( "Has Color Value Regex", get fldHasColorValueRegex )
+	setRegistrySa ( "True Color", saColors, get chcTrueColor )
+	setRegistrySa ( "False Color", saColors, get chcFalseColor )
+
+	setRegistryString ( "Excluded Attributes at Level Regex", get fldExcludedAttrLevelRegex )
+	setRegistrySa ( "Exclude Attributes at Level", saLevels, get chcExcludeAttrLevel )
+
+// output
+	setRegistrySa ( "Paper Size", saPaperSizes, get rbPaperSize )
+	setRegistrySa ( "Paper Orientation", saPaperOrientations, get rbPaperOrientation )
+	setRegistryBoolean ( "Separate Last Objects", get cbSeparateLastObjects ) 
+	setRegistryString ( "Font Size Reference", get fldFontSizeReference )
+	setRegistryString ( "Indent", get fldIndent )
+
+	string sOutputFileName = get fnOutputFileBrowse				// output file path
+	int iCount = 0
+	string sOutputFilePath = ""
+	for ( iCount = 0; iCount < length sOutputFileName; iCount++ ) 
+	{
+		if ( sOutputFileName[iCount] == '\\' ) sOutputFilePath = sOutputFileName[0:iCount]
+	} 
+	setRegistryString ( "Output File Path", sOutputFilePath )
+}
+
+// Read values from the registry and set global variables.
+void readRegistry (  )
+{
+// involved modules	
+	readRegistrySa ( chcMaxOutLevel, "Maximum Out Level", saLevels, "Level 9" )
+	readRegistrySa ( chcMaxInLevel, "Maximum In Level", saLevels, "Level 9" )
+	readRegistryString ( fldIncludeNextLevelObjectRegex, "Include Next Level Object Regex", "TS-" )
+	readRegistryString ( fldExcludeNextLevelObjectRegex, "Exclude Next Level Object Regex", "not applicable" )
+	readRegistryBoolean ( cbSelectModulesToShowEnforced, "Enforce Modules to Show", "false" )
+	readRegistryString ( fldSelectModulesToShowRegex, "Modules to Show Regex", "." )
+	readRegistryString ( fldModulesToExportRegex, "Modules To Export Regex", "(CS$)|(RS$)" )
+	readRegistryString ( fldWantedBaselineSuffix, "Use Baseline Suffix", "" )
+	
+// attributes to export
+	readRegistryString ( txtSelectAttrRegex, "Select Attributes Regex", "(^Object Identifier$)|(^Object Number$)|(^Object Heading$)|(^Object Text$)")
+	readRegistryString ( fldIdentifierMinusAttr, "Identifier Minus Attribute", "" )
+	readRegistryString ( fldIdentifierBracesAttr, "Identifier Braces Attribute", "" )
+
+// object/attribute distinction
+	readRegistryBoolean ( cbMarkDuplicated, "Mark Duplicated Objects", "true" )
+	readRegistryBoolean ( cbShowSuspect, "Show Suspect Links", "true" )
+	readRegistryBoolean ( cbUsePlaceholder, "Use Placeholder", "false" )
+	readRegistryBoolean ( cbIncludeEmptyAttr, "Include Empty Attributes", "false" )
+	readRegistryBoolean ( cbNoFilter, "No Filter", "false" )
+	//readRegistryBoolean ( cbRealHeadings, "Real Headings", "false" )
+	//readRegistryBoolean ( cbRealHeadingsRepeatInTable, "Real Headings (Repeat in Tables)", "false" )
+	readRegistryInteger ( cbHeadingRadio, "Treat Heading Objects as", 1)
+	
+	readRegistryBoolean ( cbListAllAttributes, "List All Attributes", "false" )
+
+	readRegistryString ( fldApplicableAttrRegex, "Applicable Attribute Regex", "Object Number" )	// not applicable
+	readRegistryString ( fldHasApplicableValueRegex, "Has Applicable Regex", "." )
+	readRegistryBoolean ( cbHideNotApplicable, "Hide Not Applicable", "false" )
+
+	readRegistryString ( fldColorAttrRegex, "Color Attribute Regex", "Test Result" )	// color
+	readRegistryString ( fldHasColorValueRegex, "Has Color Value Regex", "Pass" )
+	readRegistrySa ( chcTrueColor, "True Color", saColors, "Green" )
+	readRegistrySa ( chcFalseColor, "False Color", saColors, "Red" )
+
+	readRegistryString ( fldExcludedAttrLevelRegex, "Excluded Attributes at Level Regex", "not applicable" )	// exclude below level
+	readRegistrySa ( chcExcludeAttrLevel, "Exclude Attributes at Level", saLevels, "Level 9" )
+
+// output
+	readRegistrySa ( rbPaperSize, "Paper Size", saPaperSizes, "A4" )
+	readRegistrySa ( rbPaperOrientation, "Paper Orientation", saPaperOrientations, "Portrait" )
+	readRegistryBoolean ( cbSeparateLastObjects, "Separate Last Objects", "false" ) 
+	readRegistryString ( fldFontSizeReference, "Font Size Reference", "24" )
+	readRegistryString ( fldIndent, "Indent", "300" )
+	
+	string sOutputFilePath = getRegistry ( sRegistryPath, "Output File Path" ) // Output File Path
+	string sOutputFileName = ""
+	if ( !null mBaseModule ) sOutputFileName =  "Para Export Traceability " mBaseModule."Name" ".rtf"
+	set ( fnOutputFileBrowse, sOutputFilePath sOutputFileName )
+}
+
+// **************************************************************************************************************
+// Export traceability handling
+
+string flattenAttribute ( string sValueChain )
+{
+	int iPosition
+	string sReturn = ""
+	for( iPosition=0; iPosition < length sValueChain; iPosition++ )
+	{
+		if ( sValueChain[iPosition] == '\n' ) sReturn = sReturn ", "
+		else sReturn = sReturn sValueChain[iPosition] ""
+	}
+	return sReturn
+}
+
+string objectToString ( Object oThis, int iLevel )
+{
+    iExportedObjectsCount++
+    bool bFirstLine = true
+    bool bApplicable = false
+	string sObject =  sBlack
+	if ( !put ( skUniqueObjects, oThis, 0 ) ) {
+		if ( get cbMarkDuplicated ) sObject = sPurple
+	}
+	else iUniqueObjectsCount++
+
+	string sAttrName = ""		// Export selected attributes
+	for sAttrName in mlstAttrToExport do
+	{
+		if( iLevel > get chcExcludeAttrLevel && isExcludeAttrLevel sAttrName ) {
+			iHiddenAttrCount++
+			continue
+		}
+		
+		string sAttrValue = probeAttribute_( oThis, sAttrName, false )
+		bool bIncludeEmptyAttr = false
+		if ( get cbIncludeEmptyAttr )
+		{
+			current = module oThis 
+			bIncludeEmptyAttr = exists attribute sAttrName
+		} 
+		if ( !null sAttrValue || bIncludeEmptyAttr ) {
+			int iOleCount = 0
+			iExportedAttrCount++
+			string sColor = ""
+			if ( isColorAttribute sAttrName ) {			// color the attribute value
+				if ( hasColorValue sAttrValue ) sColor = saColorFonts[get chcTrueColor] 
+				else sColor = saColorFonts[get chcFalseColor] 
+			}
+			
+			if ( sAttrName == "Object Identifier" ) {		// object identifier
+				sObject = sObject "\\b\\fi-" sIndent " " identifier oThis
+				string sIdentifierMinusAttr = probeAttribute_( oThis, get fldIdentifierMinusAttr, false )
+				if ( !null sIdentifierMinusAttr )  sObject = sObject "-" sIdentifierMinusAttr
+				if ( !bCheckApplicableAttr || ( isApplicableAttr get fldIdentifierMinusAttr && hasApplicableValue sIdentifierMinusAttr ) ) bApplicable = true
+				string sIdentifierBracesAttr = probeAttribute_( oThis, get fldIdentifierBracesAttr, false)
+				if ( !null sIdentifierBracesAttr) sObject = sObject " (" sIdentifierBracesAttr ")"
+				if ( !bCheckApplicableAttr || ( isApplicableAttr get fldIdentifierBracesAttr && hasApplicableValue sIdentifierBracesAttr ) ) bApplicable = true
+				sObject = sObject "\\b0  "
+				bFirstLine = false
+			}	
+			else if ( sAttrName == "Object Number" ) {	// object number for headings
+				string sObjectHeading = oThis."Object Heading" 
+				if ( sObjectHeading != "" ) {
+					sObject = sObject "\\b " number oThis  " \\b0 "
+					bFirstLine = false
+				}
+			}
+			else if ( sAttrName == "Object Heading" ) {
+				sObject = "\\fs" iFSTableHeading sGrayBack sObject "\\b " sColor getPlaceholder sAttrValue "\\b0 " sWhiteBack  // object heading
+				bFirstLine = false
+			}
+			else if ( sAttrName == "Object Text" ) {
+				iOleCount = oleCount(oThis.sAttrName)
+				sObject = "\\fs" iFSTableText " " sObject sColor getPlaceholder sAttrValue	// object text
+				bFirstLine = false
+			} 
+			else {
+				iOleCount = oleCount(oThis.sAttrName)
+				if ( !bFirstLine ) sObject = sObject "\\par"
+				sObject = "\\fs" iFSTableText " " sObject sGray "\\fi0\\b " sAttrName ":\\b0  " sColor flattenAttribute sAttrValue	// attribute
+				bFirstLine = false
+			}
+			
+			if (0 < iOleCount) sObject = sObject sRed "Contains " iOleCount " non-exportable embedded object(s)!" // Attribute contains OLEs
+			if ( !bCheckApplicableAttr || ( isApplicableAttr sAttrName && hasApplicableValue sAttrValue ) ) bApplicable = true
+		}
+	}
+	if ( !bApplicable ) {
+		iNotApplicableObjectCount++
+		if ( get cbHideNotApplicable ) sObject = ""
+		else sObject = sObject "\\par\\b0 " sRed "Not Applicable!"
+	}
+	return sObject
+}
+
+void addObjectInfo ( Object oThis, int iLevel )
+{
+	if ( saLevelText[iLevel] == "" )  saLevelText[iLevel] = objectToString ( oThis, iLevel )
+	else saLevelText[iLevel] = saLevelText[iLevel] " \\par " objectToString ( oThis, iLevel )
+}
+
+void exportRow ( int iLevel )
+{
+	bool bShowRow = false
+	for iTemp in 0 : iActualMaxLevel do {
+		if ( saLevelText[iTemp] != "" ) bShowRow = true
+	}
+	if ( !bShowRow ) return
+
+	strmOutput << "\\trowd \\trgaph108\\trleft-108\\trkeep"
+
+	strmOutput << sLeftBorder	// set the borders 
+	saLevelBorder[iActualMaxLevel] = saLevelBorder[iActualMaxLevel] sRightBorder
+	if ( iLevel == 0 && bHasInLinks ) {
+		if ( iActualMaxLevel > 0 ) for iTemp in 1 : iActualMaxLevel do saLevelBorder[iTemp] = saLevelBorder[iTemp] sBottomBorder
+	}
+	else for iTemp in iLevel : iActualMaxLevel do saLevelBorder[iTemp] = saLevelBorder[iTemp] sBottomBorder
+	for iTemp in 0 : iActualMaxLevel do {
+		int iRightBorderPixel = ( iTemp+1 ) * iColumnWidth
+		if ( iTemp >= 0 && iTemp <=9 )
+			strmOutput << saLevelBorder[iTemp] sCellBackground "\\cellx" iRightBorderPixel ""
+	}
+	
+	strmOutput << "\\intbl " 
+	for iTemp in 0 : iActualMaxLevel do strmOutput << "" saLevelText[iTemp] " \\cell " 
+	strmOutput << "\\row\n"
+	
+	for iTemp in 0 : iActualMaxLevel do {
+		saLevelText[iTemp] = ""
+ 		saLevelBorder[iTemp] = sLeftBorder
+	}
+}
+
+void exportInObject ( Object oThis, int iLevel, string sMakesSuspect ) 
+{
+	if ( !isModuleToShow name module oThis ) return // do not export this module and all module linked to it
+
+    if ( iLevel > 0 ) {	// export the last row if the time is right 
+    	if( iLevel < iLastLevel ) exportRow iLevel
+    	else if ( iLevel == iLastLevel ) 
+    	{
+    		if ( get cbSeparateLastObjects ) exportRow iLevel
+    		else {
+			    Link lIn = null
+			    for lIn in all ( oThis<-"*" ) do {
+			    	exportRow iLevel
+			    	break
+			    }
+    		}
+    	}
+    }
+ 	iLastLevel = iLevel
+
+   	if ( iLevel > 0 || get chcMaxOutLevel == 0 ) {	// don't add if already shown for out trace
+   		addObjectInfo ( oThis, iLevel )	// add object information
+    	for iTemp in iLevel : iActualMaxLevel do {
+    		if ( iTemp >= 0 && iTemp <=9 )
+    			saLevelBorder[iTemp] = sTopBorder // top borders
+    	}
+   	}
+   	else saLevelBorder[0] = ""
+	if ( sMakesSuspect != "" )		// mark suspect if needed 
+	{
+		iSuspectLinksCount++
+		string sLineBreak = "" 
+		if ( saLevelText[iLevel] != "" ) sLineBreak = "\\par "
+		saLevelText[iLevel] = saLevelText[iLevel] sLineBreak sRed "\\b0\\fi0 Makes " sMakesSuspect " suspect"
+	}
+    
+	if ( /* saLevelText[iLevel] != "" && */ !excludeNextLevelObject identifier oThis && ( iLevel < get chcMaxInLevel || includeNextLevelObject identifier oThis ) )
+	{ 
+		if ( get cbShowSuspect && fnDetermineSuspectInLinks oThis )  saLevelText[iLevel] = saLevelText[iLevel] sRed "\\par\\fi0\\b0 Has suspect in links"
+
+	    Link lIn = null
+	    for lIn in all ( oThis<-"*" ) do {
+	        ModuleVersion mvIn = sourceVersion lIn
+	        if ( null module mvIn || isDeleted module mvIn ) continue
+	        Object oIn = source lIn
+	        if ( null oIn || isDeleted oIn ) continue
+
+			if ( get cbShowSuspect ) {		// Check suspicion
+				string sCleared = probeAttribute_( lIn, "Suspicion Cleared Backwards", false )
+				sMakesSuspect = ""
+				if ( !null sCleared ) { if ( lastModifiedTime oIn > date ( sCleared, loc ) ) sMakesSuspect = identifier oThis }
+				else 				{ if ( lastModifiedTime oIn > lastModifiedTime lIn ) sMakesSuspect = identifier oThis }
+			}
+			if ( iLevel < iActualMaxLevel ) exportInObject ( oIn, iLevel+1, sMakesSuspect ) 
+	    }
+	}
+	if ( iLevel == 0 ) {					// export the rest of the requirement if there is something left
+	    for iTemp in 0 : iActualMaxLevel do {
+	    	if ( saLevelText[iTemp] != "" ) {
+				exportRow iLevel
+				break
+	    	}
+	    }
+	}
+}
+
+void exportOutObject ( Object oThis, int iLevel, string sMakesSuspect ) 
+{
+	if ( !isModuleToShow name module oThis ) return
+    if ( iLevel > 0 ) {	// export if the time is right
+    	if ( iLevel < iLastLevel ) exportRow iLevel
+	    else if ( iLevel == iLastLevel ) {
+    		if ( get cbSeparateLastObjects ) exportRow iLevel
+    		else {
+		    	Link lOut = null
+			    for lOut in all ( oThis->"*" ) do {
+			    	exportRow iLevel
+			    	break
+			    }
+    		}
+	    }
+    }
+ 	iLastLevel = iLevel
+
+	//if (!isModuleToShow name module oThis ) return // do not export this module and all module linked to it
+
+   	addObjectInfo ( oThis, iLevel )	// add object information
+   	// if ( iLevel>iActualMaxLevel ) confirm "Object: " identifier oThis " iLevel: " iLevel "   iActualMaxLevel: " iActualMaxLevel ""
+    for iTemp in iLevel : iActualMaxLevel do saLevelBorder[iTemp] = sTopBorder	// top borders
+	if ( sMakesSuspect != "" )	// mark suspect if needed 
+	{
+		string sLineBreak = "" 
+		if ( saLevelText[iLevel] != "" ) sLineBreak = "\\par "
+		saLevelText[iLevel] = saLevelText[iLevel] sLineBreak sRed "\\b0\\fi0 Makes " sMakesSuspect " suspect"
+	}
+
+	if ( /* saLevelText[iLevel] != "" && */ !excludeNextLevelObject identifier oThis && ( iLevel < get chcMaxOutLevel  || includeNextLevelObject identifier oThis ) ) {  
+		if ( get cbShowSuspect && fnDetermineSuspectOutLinks oThis )  saLevelText[iLevel] = saLevelText[iLevel] sRed "\\par\\fi0\\b0 Has suspect out links"
+		
+	    Link lOut = null
+	    for lOut in all( oThis->"*" ) do {
+	        ModuleVersion mvOut = targetVersion lOut
+	        if ( null module mvOut  || isDeleted module mvOut ) continue
+	        Object oOut = target lOut
+	        if ( null oOut || isDeleted oOut ) continue
+
+			if ( get cbShowSuspect ) {			// Check suspicion
+				string sCleared = probeAttribute_( lOut, "Suspicion Cleared Forwards", false )
+				sMakesSuspect = ""
+				if ( !null sCleared ) { if ( lastModifiedTime oOut > date ( sCleared, loc ) ) sMakesSuspect = identifier oThis } 
+				else 				{ if ( lastModifiedTime oOut > lastModifiedTime lOut ) sMakesSuspect = identifier oThis }
+			}
+			exportOutObject ( oOut, iLevel+1, sMakesSuspect ) 
+	    }
+	}
+	if ( iLevel == 0 ) {						 // export the rest of the requirement if there is something left
+	    for iTemp in 0 : iActualMaxLevel do { 
+	    	if ( saLevelText[iTemp] != "" ) {
+				exportRow iLevel
+				break
+	    	}
+	    }
+	}
+}
+
+void addTableHeader ( )
+{
+	strmOutput << "\\trowd \\trgaph108\\trleft0\\trhdr"	
+	for iTemp in 1 : iActualMaxLevel+1 do {		// make the table cells
+		int iRightBorderPixel = iTemp*iColumnWidth
+		strmOutput << "\\cellx" iRightBorderPixel ""
+	}
+	strmOutput << "\n" sGray "\\intbl \\b \\fs" iFSTableText " "	// output the table header
+	for iTemp in 0 : iActualMaxLevel do {
+		strmOutput << "\\qc Level " iTemp "\\cell "
+	}
+	strmOutput << "\\row\\li" sIndent "\\cf0\\fs" iFSTableText "\\ql\n"
+}
+
+void addHeading ( int iLevel, string sHeading )
+{
+	strmOutput << "\\pard\\par\\plain \\ltrpar\\s" iLevel "\\ql \\li0\\ri0\\sb40\\sl259\\slmult1\\keep\\keepn\\widctlpar\\wrapdefault\\aspalpha\\aspnum\\faauto\\outlinelevel" iLevel "\\adjustright\\rin0\\lin0\\itap0\\pararsid15823576 \\rtlch\\fcs1 \\af0\\afs24\\alang1025 \\ltrch\\fcs0  \\fs24\\cf18\\lang1033\\langfe1033\\loch\\af31502\\hich\\af31502\\dbch\\af31501\\cgrid\\langnp1033\\langfenp1033 "
+	strmOutput << sBlack "{\\rtlch\\fcs1 \\af0 \\ltrch\\fcs0 \\insrsid15823576 \\hich\\af31502\\dbch\\af31501\\loch\\f31502\\fs" iFSHeading "\\b\\ul " sHeading "\\b0\\ul0\\fs" iFSText "\\par}\n"	
+//	strmOutput << sBlack "{\\pard\\par\\fs" iFSHeading "\\b\\ul\\slink" iLevel " " sHeading "\\b0\\ul0\\par\\fs" iFSText "\\par}\n"	
+//	strmOutput << "\n{\\par\\par\\pard\\li0\\keepn\\outlinelevel" iLevel sBlack " " sHeading  "}\n"
+//	strmOutput << "\\par\\par\\pard\\li0\n"
+}
+
+void doExportBaseModule ( DB dbThis )
+{
+	bCancelled = false
+	if ( null mBaseModule ) {
+		ack "No base module selected!"
+		return
+	}
+	noError													// open the output file
+	strmOutput = write get fnOutputFileBrowse
+	string sOpenStatus = lastError
+	if ( !null sOpenStatus )
+	{
+		matches( ".> ", sOpenStatus )
+		ack sOpenStatus[( end 0 )+1:] "\nMake sure that the path exists and that no other program is blocking the output file."
+		return
+	}
+
+	saveRegistry
+	
+	// color attributes
+	if ( get fldColorAttrRegex == "" ) set ( fldColorAttrRegex, "not applicable" )
+	isColorAttribute = regexpOf get fldColorAttrRegex
+	hasColorValue = regexpOf get fldHasColorValueRegex
+	
+	// check applicability
+	if ( get fldApplicableAttrRegex == "" ) set ( fldApplicableAttrRegex, "not applicable" )
+	isApplicableAttr = regexpOf get fldApplicableAttrRegex
+	bCheckApplicableAttr = get fldApplicableAttrRegex != "not applicable"  // don't check if it is empty
+	hasApplicableValue = regexpOf get fldHasApplicableValueRegex
+	
+	// check excluding
+	if ( get fldExcludedAttrLevelRegex == "" ) set ( fldExcludedAttrLevelRegex, "not applicable" )
+	isExcludeAttrLevel = regexpOf get fldExcludedAttrLevelRegex
+	
+	sIndent = get fldIndent
+
+	calculatePaperFont
+
+	// file header
+	strmOutput << "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\fonttbl{\\f0\\fswiss\\fcharset0 Arial;}}" sColorTable "\n"
+	if ( get rbPaperOrientation == Landscape ) strmOutput << "\\landscape"
+	strmOutput << "\\paperw" iPaperWidth "\\paperh" iPaperHight "\\margl" iMargin "\\margr" iMargin "\\margt" iMargin "\\margb" iMargin "\\headery567\\footery567\n"
+
+	Date dNow = dateOf intOf today 
+	string sNow = dNow ""
+	strmOutput << "\\b\\ul\\fs" iFSHeading " " getModuleName mBaseModule " - Traceability Export\\ul0\\b0\\par\\fs" iFSText "\\par\n"
+	strmOutput << "\\li300 "
+	strmOutput << "This traceability export has been generated with Para Export Traceability (" progRelease ") " today sNow[8:] ".\\par\n"
+	strmOutput << "\\par\\li0 "
+
+	if ( bReloadModules ) loadModules		// load involved modules and output information
+	if ( bReloadModules ) {				// the loading did not work
+		strmOutput << "Not all involved modules loaded -> Aborting!" 
+		close strmOutput
+		return
+	}
+	strmOutput << buffLoadedModules
+	
+	showAttributeInformation	// output exported attributes information
+		
+	strmOutput << sBlack "\\pard\\par\\fs" iFSHeading "\\b0\\ul Actual Traceability Matrix\\ul0\\par\\fs" iFSText "\\par\n"		// actual traceability matrix description
+	strmOutput << "\\li300 "
+	if ( get chcMaxOutLevel > 0 && get chcMaxInLevel > 0 ) {
+		strmOutput << "Linked Out objects are written with " sSkyBlueBack "Sky Blue" sWhiteBack " background.\\par\n"
+		sSkyBlueCell = "\\clcbpat5 "
+	}
+	else sSkyBlueCell = "" // no sky blue background 
+	if ( get chcMaxInLevel > 0 ) strmOutput << "Linked In objects are written with white background.\\par\n" 
+	strmOutput << "Attributes are written " sGray "gray" sBlack ".\\par\\par\n"
+	if ( get cbMarkDuplicated ) strmOutput << "Duplicated objects are written " sPurple "purple" sBlack ".\\par\n"
+	if ( get cbShowSuspect ) strmOutput << "Suspect links information is shown in " sRed "red" sBlack ".\\par\n" 
+	if ( !get cbIncludeEmptyAttr ) strmOutput << "Empty attributes are not included.\\par\n" 
+	if ( get cbNoFilter ) strmOutput << "Filtering is disabled.\\par\n" 
+	//if ( get cbRealHeadings ) strmOutput << "Level 0 headings are shown as real headings.\\par\n" 
+	if (0 < get cbHeadingRadio) strmOutput << "Headings are shown as real headings.\\par\n"
+	if (2 > get cbHeadingRadio) strmOutput << "Headings are shown as traced objects.\\par\n"
+
+	int iExportedBaseObjectsCount = 0
+	Object oBase = null
+	skUniqueObjects = create
+	iExportedObjectsCount = 0
+	iUniqueObjectsCount = 0
+	iSuspectLinksCount = 0
+	iNotApplicableObjectCount = 0
+	iExportedAttrCount = 0
+	iHiddenAttrCount = 0
+
+	progressStart ( dbExportTrace, "Para Export Traceability " getModuleName mBaseModule, "", iBaseObjectsCount )
+
+	if ( get cbSelectModulesToShowEnforced ) doSelectModulesToShow ( btnSelectModulesToShow )
+	string sModulesToShowRegex = ""  // make the modules to show regular expression
+	string sModuleName
+	for sModuleName in mlstInvolvedModules do {
+		int i = 0
+		for ( i = 0; i < length sModuleName; i++ ) if ( sModuleName[i] == '[' ) break
+		if ( sModulesToShowRegex != "" ) sModulesToShowRegex = sModulesToShowRegex "|"
+		sModulesToShowRegex = sModulesToShowRegex "(^" sModuleName[0:i-3] "$)"
+	}
+	isModuleToShow = regexpOf sModulesToShowRegex
+
+	bool bAlreadyInTable = false
+	for oBase in mBaseModule do	// sorted according to order in module
+	{
+		if ( isDeleted oBase || cell oBase || table oBase || row oBase ) continue
+		progressStep iExportedBaseObjectsCount++
+		progressMessage "Exporting " identifier oBase 
+		if ( progressCancelled ) {
+			bCancelled = true
+			break
+		}
+		
+		string sHeading = oBase."Object Heading"
+		bool bRealHeading = false
+		//if ( sHeading != "" && get cbRealHeadings ) {
+		if ( sHeading != "" && get cbHeadingRadio > 0) {
+			bAlreadyInTable = false
+			sHeading = number oBase "\t" sHeading 
+			addHeading ( level oBase, sHeading )
+			bRealHeading = true
+		}
+		//else { 
+		//if (!bRealHeading or get cbRealHeadingsRepeatInTable) {
+		if (!bRealHeading or get cbHeadingRadio != 1) {
+			bHasInLinks = false
+			if ( get chcMaxInLevel > 0 ) {
+			    Link lIn = null
+			    for lIn in all ( oBase<-"*" ) do {
+			    	bHasInLinks = true
+			    	break
+			    }
+			}
+			if ( get chcMaxOutLevel > 0 ) {
+				if ( !bAlreadyInTable ) {
+					addTableHeader
+					bAlreadyInTable = true
+				}
+				sCellBackground = sSkyBlueCell
+				exportOutObject ( oBase, 0, "" )
+			}
+			if ( get chcMaxInLevel > 0 ) {
+				if ( !bAlreadyInTable ) {
+					addTableHeader
+					bAlreadyInTable = true
+				}
+				bHasInLinks = false
+				sCellBackground = ""
+				exportInObject ( oBase, 0, "" )
+			}
+		}
+	}
+	progressStop
+	strmOutput << sBlack "\\pard \\par\\fs" iFSHeading "\\b0\\ul Summary\\ul0\\par\\fs" iFSText "\\par\n"
+	if ( bCancelled ) strmOutput << "******   The export has been cancelled!   ******\\par\n"
+	else { 
+		strmOutput << iExportedObjectsCount " objects have been exported from which " iUniqueObjectsCount " have been unique.\\par\n"
+		strmOutput << iNotApplicableObjectCount " not applicable objects have been " 
+		if (get cbHideNotApplicable ) strmOutput << "hidden.\\par\n" 
+		else strmOutput << "marked as " sRed "Not Applicable!" sBlack ".\\par\n"
+		strmOutput << iExportedAttrCount " attributes have been exported and " iHiddenAttrCount " have been hidden.\\par\n"
+		strmOutput << iSuspectLinksCount " suspect links have been found.\\par\n"
+	}
+	strmOutput << " \\par }"
+	close strmOutput
+	delete skUniqueObjects
+}
+
+void initAttrNames ( )
+{
+	empty mlstAttrToExport
+	insert ( mlstAttrToExport, 0, "Object Identifier" )		// add the attributes to the list
+	set ( mlstAttrToExport, 0, false )
+	insert ( mlstAttrToExport, 1, "Object Number" )
+	set ( mlstAttrToExport, 1, false )
+	insert ( mlstAttrToExport, 2, "Object Heading" )
+	set ( mlstAttrToExport, 2, false )
+	insert ( mlstAttrToExport, 3, "Object Short Text" )
+	set ( mlstAttrToExport, 3, false )
+	insert ( mlstAttrToExport, 4, "Object Text" )
+	set ( mlstAttrToExport, 5, false )
+}
+
+void initFromBaseModule ( )
+{
+	Object oBase = null
+	iBaseObjectsCount = 0
+	for oBase in /* entire */ mBaseModule do { 	// count the top object for the progress bar
+		if ( isDeleted oBase || cell oBase || table oBase || row oBase ) continue
+		iBaseObjectsCount++
+	}
+	set ( fldBaseModuleName, fullName mBaseModule )
+	setTitle ( dbExportTrace, "Para Export Traceability " getModuleName mBaseModule )
+	initAttrNames
+	addModuleAttrToList (mBaseModule )
+	loadModules
+	doSelectMatchingAttr btnSelectMatchingAttr
+	active btnReloadInvolvedModules
+	active btnSelectAllAttr
+	active btnSelectMatchingAttr
+	active btnSelectAsView
+	active btnDeselectAllAttr
+	
+
+	string sOutputFileName = get fnOutputFileBrowse
+	int iCount = 0
+	string sOutputFilePath = ""
+	for ( iCount = 0; iCount < length sOutputFileName; iCount++ ) {
+		if ( sOutputFileName[iCount] == '\\' ) sOutputFilePath = sOutputFileName[0:iCount]
+	} 
+	set ( fnOutputFileBrowse, sOutputFilePath "Para Export Traceability " getModuleName mBaseModule ".rtf" )
+}	
+
+// Browse the selected base module
+void doBrowseBaseModule ( DBE x ){
+    string sSelectedBaseModule = fnMiniExplorer ( dbExportTrace, fBaseSystem, MINI_EXP_FORMAL_MODS, "Browse Base Module", "Select a base module..." )
+    if ( !null sSelectedBaseModule && !isDeleted module sSelectedBaseModule && module sSelectedBaseModule ) {
+	    mBaseModule = read ( sSelectedBaseModule, false )
+	    initFromBaseModule
+    }
+    if ( get cbNoFilter ) {
+    	current = mBaseModule
+    	filtering off
+    } 
+}
+// ***********************************************************************************************************************
+void scanFolder ( Folder fThis ) 
+{
+	Item itmThis
+	if ( get fldModulesToExportRegex == "" ) set ( fldModulesToExportRegex, "." )
+	string sModulesToExportRegex = get fldModulesToExportRegex
+	Regexp isModuleToExport = regexpOf sModulesToExportRegex
+
+	for itmThis in all fThis do {
+		if ( null itmThis || isDeleted itmThis ) continue
+		if ( type itmThis == "Project" || type itmThis == "Folder" ) scanFolder folder itmThis
+		else if ( type itmThis == "Formal" ) {
+			if ( !isModuleToExport fullName itmThis ) continue
+		    mBaseModule = read ( fullName itmThis, false )
+			Baseline bBaseline = null
+			for bBaseline in mBaseModule do {
+				if ( get fldWantedBaselineSuffix == "" ) set ( fldWantedBaselineSuffix, "not applicable" )
+				if ( suffix bBaseline == get fldWantedBaselineSuffix ) mBaseModule = load ( mBaseModule, bBaseline, false )
+			}
+		    initFromBaseModule
+		    if ( !bCancelled ) doExportBaseModule dbExportTrace
+		}
+		if ( bCancelled ) return
+	}
+}
+
+// Export complete system
+void doExportBaseSystem ( DB dbThis )
+{
+	bCancelled = false
+    if ( !null fBaseSystem ) scanFolder fBaseSystem 
+}
+
+void doBrowseSystem ( DBE dbeThis )
+{
+    string sSelectedSystem = fnMiniExplorer ( dbExportTrace, fBaseSystem, MINI_EXP_FORMAL_MODS, "Browse Base System", "Select a base system (project)..." )
+
+	if ( !null sSelectedSystem )
+	{
+	    Item iItem = item sSelectedSystem
+	    if ( type iItem == "Project" || type iItem == "Folder" ) fBaseSystem = folder iItem
+	    else fBaseSystem = getParentFolder iItem
+	    set ( fldBaseSystemName, fullName fBaseSystem )
+	}
+}
+
+// ****************************************************************************************************************
+
+void showHelp( string strModule, string strHeading )
+{
+	Module mCurrent = current
+	Module mHelp = read( strModule, true )
+	if ( mHelp == null ) {
+		errorBox "Could not open help module '" strModule "'"
+	} 
+	else {
+		current mHelp
+		View viewHelp = view "Help"
+		if ( !null viewHelp ) load viewHelp
+		Object oThis = first mHelp
+		if ( !null oThis && strHeading "" == "" ) {
+			int iAbsoluteNumber = oThis."Absolute Number"
+			gotoObject( iAbsoluteNumber, mHelp )
+		} 
+		else {
+			for oThis in mHelp do {
+				if ( oThis."Object Heading" "" == strHeading ) {
+					int iAbsoluteNumber = oThis."Absolute Number"
+					gotoObject( iAbsoluteNumber, mHelp )
+					break
+				}
+			}
+		}
+	}
+	if ( !null mCurrent ) current mCurrent
+}
+
+void showHelp( string strModule ) {
+	showHelp( strModule, "" )	
+}
+
+void doShowHelp ( DB db ) {
+	showHelp ( "/Menu Descriptions/Common/Generation/Script - Para Export Traceability" )
+}
+
+void doClose ( DB x ) {
+	saveRegistry
+	hide dbExportTrace
+	release dbExportTrace
+}
+
+
+// *****************************************************************************************************************
+// Dialog design
+
+dbExportTrace = create ( "Para Export Traceability", styleCentered/*|styleFixed*/ )
+																			// base system
+left dbExportTrace
+fldBaseSystemName = field ( dbExportTrace, "Base System", fullName fBaseSystem, 38, true )
+beside dbExportTrace
+btnBrowseBaseSystem = button ( dbExportTrace, "Browse...", doBrowseSystem, true )
+fldModulesToExportRegex = field ( dbExportTrace, "Export modules with", "", 20 )
+DBE lblInTheName = label ( dbExportTrace, " in the name." )
+																			// base module
+left dbExportTrace
+fldBaseModuleName = field ( dbExportTrace, "Base Module", "", 38, true )
+beside dbExportTrace
+btnBrowseBaseModule = button ( dbExportTrace, "Browse...", doBrowseBaseModule, true )
+fldWantedBaselineSuffix = field ( dbExportTrace, "Use baseline with suffix", "not applicable", 20 )
+DBE lblIfItExists = label ( dbExportTrace, "if it exists." )
+																			// involved modules
+left dbExportTrace
+lblInvolvedModules = label( dbExportTrace, sLeftSpacer "   Involved Modules" sRightSpacer )
+lblInvolvedModules->"top"->"flush"->btnBrowseBaseModule
+inactive lblInvolvedModules
+left dbExportTrace
+chcMaxOutLevel = choice ( dbExportTrace, "Out To", saLevels, 0, 7, false )
+beside dbExportTrace
+chcMaxInLevel = choice ( dbExportTrace, "In To", saLevels, 0, 7, false )
+btnReloadInvolvedModules = button ( dbExportTrace, "Reload Involved Modules", doReloadInvolvedModules )  
+left dbExportTrace						
+fldIncludeNextLevelObjectRegex = field ( dbExportTrace, "Include next level from objects with", "", 10 )
+beside dbExportTrace
+label ( dbExportTrace, "in the identifier." )
+left dbExportTrace						
+fldExcludeNextLevelObjectRegex = field ( dbExportTrace, "Exclude next level from objects with", "", 10 )
+beside dbExportTrace
+label ( dbExportTrace, "in the identifier." )
+left dbExportTrace
+
+cbSelectModulesToShowEnforced = toggle ( dbExportTrace, "Enforce", true )
+beside dbExportTrace
+btnSelectModulesToShow = button ( dbExportTrace, "Select", doSelectModulesToShow )  
+fldSelectModulesToShowRegex = field ( dbExportTrace, "", "", 38 )
+left dbExportTrace
+mlstInvolvedModules = multiList ( dbExportTrace, "", iHalfWidth, 15, saEmpty ) 
+mlstInvolvedModules->"left"->"form"
+mlstInvolvedModules->"right"->"unattached"
+																		// attributes to export
+lblAttrToExport = label( dbExportTrace, sLeftSpacer "      Attributes to Export" sRightSpacer )
+lblAttrToExport->"left"->"flush"->mlstInvolvedModules
+lblAttrToExport->"top"->"flush"->btnBrowseBaseModule
+inactive lblAttrToExport
+left dbExportTrace
+txtSelectAttrRegex = text ( dbExportTrace, "","", iHalfWidth, 45, false )
+txtSelectAttrRegex->"left"->"flush"->mlstInvolvedModules
+txtSelectAttrRegex->"right"->"unattached"
+
+fldIdentifierMinusAttr = field ( dbExportTrace, "Add Attributes to Identifier   -", "", 10 )
+fldIdentifierMinusAttr->"left"->"flush"->mlstInvolvedModules
+fldIdentifierMinusAttr->"top"->"flush"->txtSelectAttrRegex
+beside dbExportTrace
+fldIdentifierBracesAttr = field ( dbExportTrace, "(", "", 10 )
+label ( dbExportTrace, ")" )
+
+left dbExportTrace
+btnSelectAllAttr = button ( dbExportTrace, "Select All", doSelectAllAttr )
+btnSelectAllAttr->"left"->"flush"->mlstInvolvedModules
+beside dbExportTrace
+btnSelectMatchingAttr = button ( dbExportTrace, "As Selection", doSelectMatchingAttr )
+btnSelectAsView = button ( dbExportTrace, "As View", doSelectAsView )
+btnDeselectAllAttr = button ( dbExportTrace, "Deselect All", doDeselectAllAttr )
+btnGetMatchingAttr = button( dbExportTrace, "Get Regex", doGetMatchingAttr )
+
+left dbExportTrace
+mlstAttrToExport = multiList ( dbExportTrace, "", iHalfWidth, 15, saEmpty ) 
+mlstAttrToExport->"left"->"flush"->mlstInvolvedModules
+mlstAttrToExport->"right"->"unattached"
+
+left dbExportTrace															// attribute distinction
+DBE lblAttrDistinction = label ( dbExportTrace, "Object/Attribute Distinction" )
+lblAttrDistinction->"top"->"flush"->mlstInvolvedModules
+
+left
+label ( dbExportTrace, "  " )
+beside dbExportTrace
+string sHeadings[] = {"Traced Objects", "Heading Objects", "Both Heading and Traced Objects"}
+cbHeadingRadio = radioBox(dbExportTrace, "Treat Heading Objects as: ", sHeadings, 1)
+
+left dbExportTrace												
+label ( dbExportTrace, "  " )
+beside dbExportTrace
+cbMarkDuplicated = toggle ( dbExportTrace, "Mark Duplicated Objects", true )
+cbShowSuspect = toggle ( dbExportTrace, "Show Suspect Links", true )
+cbNoFilter = toggle ( dbExportTrace, "No Filter", false )
+//cbRealHeadings = toggle ( dbExportTrace, "Real Headings", false )
+//cbRealHeadingsRepeatInTable = toggle ( dbExportTrace, "Real Headings (Repeat in Tables)", false )
+
+//left dbExportTrace												
+//label (dbExportTrace, "  ")
+//beside dbExportTrace
+cbIncludeEmptyAttr = toggle ( dbExportTrace, "Include Empty Attributes", false )
+cbListAllAttributes = toggle ( dbExportTrace, "List All Attributes", false )
+cbUsePlaceholder = toggle ( dbExportTrace, "Use Placeholder", false )
+
+left dbExportTrace												// mark object as non applicable
+fldApplicableAttrRegex = field ( dbExportTrace, "    If attribute", "", 38 )
+beside dbExportTrace
+fldHasApplicableValueRegex = field ( dbExportTrace, "is not", "", 18 )
+cbHideNotApplicable = toggle ( dbExportTrace, "then hide it or mark it as Not Applicable!.", false )
+
+left dbExportTrace												// color attributes according to regex
+fldColorAttrRegex = field ( dbExportTrace, "    If attribute", "Test Result", 38 )
+beside dbExportTrace
+fldHasColorValueRegex = field ( dbExportTrace, "is", "Passed", 18 )
+chcTrueColor = choice ( dbExportTrace, "then make it", saColors, 0, 8, false )
+chcFalseColor = choice ( dbExportTrace, "else", saColors, 0, 8, false )
+
+left dbExportTrace												// exclude attributes below level
+fldExcludedAttrLevelRegex = field ( dbExportTrace, "    If attribute", "Object Text", 38 )
+beside dbExportTrace
+chcExcludeAttrLevel = choice ( dbExportTrace, "is below", saLevels, 0, 7, false )
+DBE lblThenExclude = label ( dbExportTrace, "then don't show it." )
+
+left dbExportTrace												// output
+DBE lblOutputSettings = label ( dbExportTrace, "Output" )
+rbPaperSize = radioBox ( dbExportTrace, "    Paper Size", saPaperSizes, 0 )
+beside dbExportTrace
+rbPaperOrientation = radioBox ( dbExportTrace, "Orientation", saPaperOrientations, 0 )
+cbSeparateLastObjects = toggle ( dbExportTrace, "Separate Last Objects", false )
+fldFontSizeReference = field ( dbExportTrace, "Font Size Reference", "", 1 )
+fldIndent = field ( dbExportTrace, "Indent", "", 2 )
+
+left dbExportTrace												// output file selector
+fnOutputFileBrowse = fileName ( dbExportTrace, "    Output Path / File Name ", "", "*.rtf", "Rich Text Files", false )
+fnOutputFileBrowse->"left"->"form"
+
+left dbExportTrace												// copyright stuff
+DBE lblDummy = label ( dbExportTrace, "" )
+lblDummy->"top"->"spaced"->fnOutputFileBrowse
+DBE lblCopyRight = label ( dbExportTrace, "Copyright (c) Reinhold Lauer " stringOf( (dateOnly today(), "yyyy") ) " version " progRelease )
+lblCopyRight->"bottom"->"spaced"->lblDummy
+inactive lblCopyRight
+
+apply ( dbExportTrace, "Export Base Module", doExportBaseModule )
+apply ( dbExportTrace, "Export Base System", doExportBaseSystem )
+apply ( dbExportTrace, "Help", doShowHelp )
+
+close ( dbExportTrace, false, doClose )
+
+//realize ( dbExportTrace, 0, 0 )                   // realize so that the lists can be populated
+realize ( dbExportTrace)                   // realize so that the lists can be populated
+setExtraHeightShare(mlstInvolvedModules, 1.0)
+setExtraHeightShare(mlstAttrToExport, 1.0)
+
+set ( mlstAttrToExport, doUpdateAttrToExport, doUpdateAttrToExport )
+set ( chcMaxOutLevel, doReloadModules )
+set ( chcMaxInLevel, doReloadModules )
+set ( fldIncludeNextLevelObjectRegex, doReloadModules )
+set ( fldExcludeNextLevelObjectRegex, doReloadModules )
+
+readRegistry
+if ( !null mBaseModule ) {
+	initFromBaseModule
+	if ( isBaseline mBaseModule ) set ( fldWantedBaselineSuffix, suffix baselineInfo mBaseModule )
+}	
+else {
+	inactive btnReloadInvolvedModules
+	inactive btnSelectAllAttr
+	inactive btnSelectMatchingAttr
+	inactive btnSelectAsView
+	inactive btnDeselectAllAttr
+}
+
+show dbExportTrace
