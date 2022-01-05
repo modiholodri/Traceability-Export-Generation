@@ -1,6 +1,6 @@
 # Traceability Export Explanation
 
-### Traceability Export Explanation
+## Traceability Export Explanation
 
 This section explains how the traceability export should be read and the different options that can be used when exporting the module traceability matrixes. How to produce the traceability export can be found in the section Traceability Export Generation.
 
@@ -10,7 +10,7 @@ The result can look similar the following example, which should be read from rig
 
 Note: In the following examples all object texts and object headings have been replaced by a placeholder, i.e. all letters have been replaced with Xs and all numbers with 9s.
 
-#### Involved Modules
+### Involved Modules
 
 This section gives a summary of the modules involved in the generated module traceability matrix.
 
@@ -20,7 +20,7 @@ The information in the columns Created By, Date and Annotation is only used if b
 
 Which modules are involved is defined by which modules are linked to the base module within the levels of the out direction, the levels of the in direction, and which modules fulfill the conditions to be included outside the defined levels. Modules inside the defined levels can be excluded according to certain module name criteria.
 
-#### Exported Attributes
+### Exported Attributes
 
 This section shows which attributes are included in the involved modules including a short summary. If an attribute is shown in the traceability matrix it is written in black. If an attribute is not shown, it is written in gray.
 
@@ -36,7 +36,7 @@ Standard attributes are the Object Heading, the Object Short Text, and the Objec
 
 User-defined attributes include any attributes defined by the users. They are listed below the Object Text attribute in alphabetical order.
 
-#### Actual Traceability Matrix
+### Actual Traceability Matrix
 
 The actual traceability matrix is the part, which shows the actual linking of the objects followed by a short introduction. The summary contains the settings according to which the actual traceability matrix has been produced.
 
@@ -56,7 +56,7 @@ The table borders are generated to make it easier to follow links. If there are 
 
 **Background Color**
 
-Linked objects in the Out \(normally up\) direction are shown with sky blue background, if also In linked objects are included in the export. Linked objects in the In direction are shown with a white background.
+Linked objects in the Out (normally up) direction are shown with sky blue background, if also In linked objects are included in the export. Linked objects in the In direction are shown with a white background.
 
 **Excluded Objects**
 
@@ -64,17 +64,17 @@ Table cells or deleted objects in the base module are not included in the tracea
 
 **Object Identifier**
 
-The object identifiers consist out of the module prefix followed by the Absolute Number. Two other attributes can be combined with the object identifier. The first attribute is separated with a ‘-‘ and the second attribute is separated with ‘ \(‘ and terminated with ‘\)’.
+The object identifiers consist out of the module prefix followed by the Absolute Number. Two other attributes can be combined with the object identifier. The first attribute is separated with a ‘-‘ and the second attribute is separated with ‘ (‘ and terminated with ‘)’.
 
 ![Additional Identifier Attributes](.gitbook/assets/6.png)
 
-For example “ATC\_SSRS-2391-S \(R\)” consists out of the Module Prefix “ATC\_SSRS-“, the Absolute Number “2391”, the safety requirement indication “-S”, and the object type “\(R\)”. That means that this object is a safety requirement with the number 2391 in the ATC subsystem requirements specification.
+For example “ATC\_SSRS-2391-S (R)” consists out of the Module Prefix “ATC\_SSRS-“, the Absolute Number “2391”, the safety requirement indication “-S”, and the object type “(R)”. That means that this object is a safety requirement with the number 2391 in the ATC subsystem requirements specification.
 
 Object identifications are written bold. Object identifications are written black, but when the object is shown a second time they can be written violet.
 
 **Object Headings**
 
-The object headings consist out of the heading number \(Object Number attribute\) and the heading text \(Object Heading attribute\).
+The object headings consist out of the heading number (Object Number attribute) and the heading text (Object Heading attribute).
 
 Headings are written bold. Object headings are written black, but when the object is shown a second time they can be written violet.
 
@@ -110,7 +110,7 @@ Duplicated objects, which are shown already above in the module traceability mat
 
 **Suspect Links**
 
-The two objects, shown in the figure Suspect Links with a red comment, indicate a suspect link between them. The comment “Has suspect out/in links” means that a link out of or into this object is suspect and that the linked objects should be check if they are still valid. The comment “Makes \[Object Identifier\] suspect” means that a change in this object has been made later than in the linked object.
+The two objects, shown in the figure Suspect Links with a red comment, indicate a suspect link between them. The comment “Has suspect out/in links” means that a link out of or into this object is suspect and that the linked objects should be check if they are still valid. The comment “Makes \[Object Identifier] suspect” means that a change in this object has been made later than in the linked object.
 
 ![Suspect Links](.gitbook/assets/8.png)
 
@@ -126,9 +126,8 @@ Real Headings can be shown without attributes so that they look like headings in
 
 ![Real Headings](.gitbook/assets/9.png)
 
-#### Summary
+### Summary
 
 At the end of the traceability matrix, a short summary is shown.
 
 ![Summary](.gitbook/assets/10.png)
-

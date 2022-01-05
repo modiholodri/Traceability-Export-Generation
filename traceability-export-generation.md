@@ -22,7 +22,7 @@ The main functions of Para Word export are…
 * Produce a rich text file.
 * Select paper size, paper orientation, font size, and indent.
 
-### Starting Para Export Traceability
+## Starting Para Export Traceability
 
 When Para Export Traceability is launched previous settings are restored from the registry. Then all the involved modules are loaded into memory, what can take some time. During the involved modules are loaded, the Attributes to Export list is populated. After all modules are loaded, the attributes are selected according to the attributes selection regular expression.
 
@@ -30,7 +30,7 @@ The Para Export Traceability user interface looks as shown below.
 
 ![Para Export Traceability User Interface](.gitbook/assets/11.png)
 
-### Base System/Module Selection
+## Base System/Module Selection
 
 By selecting the base system all modules, which fulfill the naming conventions, can be exported to the selected output path in one go. Click on Browse… to select a new base project. If a specific baseline should be loaded it the baseline suffix has to be written in the according field.
 
@@ -38,7 +38,7 @@ By selecting the base module only the selected module can be exported. Click Bro
 
 ![Base System/Module](.gitbook/assets/12.png)
 
-### Involved Modules
+## Involved Modules
 
 The involved modules are loaded when Para Export Traceability is launched, when an export is made, the involved module's settings have been changed, or when the Reload Involved Modules button is pressed.
 
@@ -58,7 +58,7 @@ If Enforce is ticked, the modules are selected according to the regular expressi
 
 Note: So far all modules are involved all the time and it is not possible to manually exclude single modules by clicking on them if they are within the level borders.
 
-### Attributes to Export
+## Attributes to Export
 
 The Attributes to Export list shows all attributes contained in all loaded modules since the last time the modules have been reloaded.
 
@@ -74,7 +74,7 @@ Note: The Attribute Selection will be set for each base module when a base syste
 
 Clicking on Get Regex sets the Attribute Selection regular expression according to the selected attributes in the Attributes to Export list.
 
-### Object/Attribute Distinction
+## Object/Attribute Distinction
 
 Objects and attributes can be made different from the rest according to certain criteria.
 
@@ -98,9 +98,9 @@ The values of attributes can be colored if the values fulfill certain criteria.
 
 Attributes can be omitted if they are below a certain level.
 
-All the text fields are regular expressions. One statement can be used for more than one Attribute and for more than one attribute value. For example, “Test Result\|RESULT\|Compliance” is valid for the attributes Test Result, RESULT Pass/Fail, and Compliance. “Pass\|Compliant” means if one of these attributes is Pass, Passed, or Compliant, it will be colored green, otherwise red.
+All the text fields are regular expressions. One statement can be used for more than one Attribute and for more than one attribute value. For example, “Test Result|RESULT|Compliance” is valid for the attributes Test Result, RESULT Pass/Fail, and Compliance. “Pass|Compliant” means if one of these attributes is Pass, Passed, or Compliant, it will be colored green, otherwise red.
 
-### Output
+## Output
 
 ![Output Settings](.gitbook/assets/17.png)
 
@@ -114,7 +114,7 @@ Change the Indent to indent everything written below the first line with the Obj
 
 Set the Output Path / File Name to the path and file name to where the traceability matrix should be exported. Click on Browse… to change the path and file name, or edit it in the Output Path / File Name field.
 
-### Export Traceability Matrix
+## Export Traceability Matrix
 
 ![Export Buttons](.gitbook/assets/18.png)
 
@@ -123,4 +123,3 @@ Click on Export Base Module to export only the base module.
 Click on Export Base System to export all involved modules, which fulfill the naming conventions, to the selected output path in one go. The file name for each module traceability matrix export is changed according to the module name.
 
 Click on Close to close Para Export Traceability.
-
